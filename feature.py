@@ -94,33 +94,46 @@ class GloveEmbedding():
         ]
 
     def get_words(self):
+        # 确保特殊符号存在
         for word in ['<PAD>', '<UNK>']:  # 确保特殊符号存在
             if word not in self.dict_words:
                 self.dict_words[word] = len(self.dict_words)
 
+        # 遍历数据中的每一项
         for term in self.data:
+            # 将每个项转换为大写并分割成单词列表
             for word in term.upper().split():
                 if word not in self.dict_words:
                     self.dict_words[word] = len(self.dict_words)
+                    # 从训练好的字典中获取词向量，若不存在则使用默认词向量
                     vec = self.trained_dict.get(word, self.embedding[1])
                     self.embedding.append(vec)
 
-        # 归一化处理
+        # 将每个词向量进行归一化处理
         self.embedding = [
             vec if i == 0 else (np.array(vec) / (np.linalg.norm(vec) + 1e-8)).tolist()
             for i, vec in enumerate(self.embedding)
         ]
+        # 更新词表长度
         self.len_words = len(self.dict_words)
 
     def get_id(self, max_len=128):
+        # 遍历训练集
         for term in self.train:
+            # 将每个词转换为大写并分割成单词列表，最多取max_len个单词
             words = term.upper().split()[:max_len]
+            # 将单词列表转换为索引列表，如果单词不在字典中则索引为1
             self.train_matrix.append([self.dict_words.get(w, 1) for w in words])
+            # 更新最长单词列表长度
             self.longest = max(self.longest, len(words))
         
+        # 遍历测试集
         for term in self.test:
+            # 将每个词转换为大写并分割成单词列表，最多取max_len个单词
             words = term.upper().split()[:max_len]
+            # 将单词列表转换为索引列表，如果单词不在字典中则索引为1
             self.test_matrix.append([self.dict_words.get(w, 1) for w in words])
+            # 更新最长单词列表长度
             self.longest = max(self.longest, len(words))
 
 class TextClDataset(Dataset):
